@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_bus_driver_app/core/constants/app_colors.dart';
-import 'package:go_bus_driver_app/data/models/driver_trip_response_model.dart';
+import 'package:go_bus_driver_app/data/models/trip/driver_trip_response_model.dart';
 import 'package:go_bus_driver_app/routes/route_paths.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -80,7 +80,7 @@ class CompletedTab extends StatelessWidget {
     return dateTimeString;
   }
 
-Widget _completedCard(BuildContext context, Trip trip) {
+Widget _completedCard(BuildContext context, DriverTrip trip) {
   String fromCity = "Mumbai";
   String toCity = "Nashik";
 

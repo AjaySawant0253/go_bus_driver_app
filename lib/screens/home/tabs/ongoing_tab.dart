@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:go_bus_driver_app/data/models/driver_trip_response_model.dart';
+import 'package:go_bus_driver_app/data/models/trip/driver_trip_response_model.dart';
 import 'package:go_router/go_router.dart';
 import 'package:go_bus_driver_app/routes/route_paths.dart';
 import 'package:intl/intl.dart';
@@ -14,7 +14,7 @@ class OngoingTab extends StatefulWidget {
 }
 
 class _OngoingTabState extends State<OngoingTab> {
-  late List<Trip> trips;
+  late List<DriverTrip> trips;
 
   @override
   void initState() {
@@ -35,7 +35,7 @@ class _OngoingTabState extends State<OngoingTab> {
   // ONGOING CARD — EXACT LIKE SCREENSHOT
   // ------------------------------------------------------------------------
 
-Widget _ongoingCard(BuildContext context, Trip trip) {
+Widget _ongoingCard(BuildContext context, DriverTrip trip) {
   String fromCity = "Mumbai";
   String toCity = "Nashik";
 
@@ -249,9 +249,9 @@ Widget _bubbleSmall(String time) {
 
   }
 
-extension on Trip {
-  Trip copyWith({String? punchOut}) {
-    return Trip(
+extension on DriverTrip {
+  DriverTrip copyWith({String? punchOut}) {
+    return DriverTrip(
       id: id,
       routeId: routeId,
       tripStartDate: tripStartDate,

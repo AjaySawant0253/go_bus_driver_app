@@ -41,12 +41,10 @@ class _LoginScreenState extends State<LoginScreen> {
           child: BlocConsumer<LoginBloc, LoginState>(
             listener: (context, state) {
               if (state is LoginSuccess) {
-                /// ✅ Navigate to Home
                 context.goNamed(RoutePaths.home);
               }
 
               if (state is LoginFailure) {
-                /// ❌ Show error
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(state.message),

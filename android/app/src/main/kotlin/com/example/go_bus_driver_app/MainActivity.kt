@@ -1,4 +1,4 @@
-package com.example.go_bus_driver_app
+package com.newtrimurtitravels.driver
 
 import io.flutter.embedding.android.FlutterActivity
 

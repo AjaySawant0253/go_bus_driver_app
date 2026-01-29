@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_bus_driver_app/core/secure/secure_storage_service.dart';
 import 'package:go_bus_driver_app/core/widgets/custom_text_form_field.dart';
 import 'package:go_bus_driver_app/core/constants/app_colors.dart';
 import 'package:go_bus_driver_app/core/constants/app_strings.dart';
@@ -17,6 +18,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final SecureStorageService _storageService = SecureStorageService();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -65,43 +67,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
                       /// ---------------- LOGO ----------------
                       Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Image.asset(
-                              AppStrings.startupLogo,
-                              width: 35,
-                              height: 35,
-                            ),
+                          Image.asset(
+                            AppStrings.loginLogo,
+                            width: 150,
+                            height: 120,
                           ),
                           const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "GoBus",
-                                style: TextStyle(
-                                  color: AppColors.primary,
-                                  fontSize: size.width * 0.075,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                "Travel made simple",
-                                style: TextStyle(
-                                  color: AppColors.primary,
-                                  fontSize: size.width * 0.035,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+                          ],
                       ),
 
                       const SizedBox(height: 25),
@@ -181,14 +156,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: ElevatedButton(
                           onPressed: state is LoginLoading
                               ? null
-                              : () {
+                              : () async {
+                                final token = await _storageService
+                                    .getFcmToken();
                                   context.read<LoginBloc>().add(
                                         LoginButtonPressed(
                                           userDetails:
                                               emailController.text.trim(),
                                           password:
                                               passwordController.text.trim(),
-                                          fcmToken: "",
+                                          fcmToken: token ?? "",
                                           signatureId: "",
                                           lat: "",
                                           lng: "",

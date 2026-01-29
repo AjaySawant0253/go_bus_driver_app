@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "626264707697",
+    "project_id": "trimurti-driver-app",
+    "storage_bucket": "trimurti-driver-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:626264707697:android:86d10fa2f890405bfc01d0",
+        "android_client_info": {
+          "package_name": "com.newtrimurtitravels.driver"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDyRWCJkvyycj_vDYsq6wOA8uUv39H5tWo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

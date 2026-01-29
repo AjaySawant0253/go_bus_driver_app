@@ -1,279 +1,293 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:go_bus_driver_app/core/constants/app_colors.dart';
+import 'package:go_bus_driver_app/core/constants/app_strings.dart';
+import 'package:go_bus_driver_app/core/utils/app_toast.dart';
+import 'package:go_bus_driver_app/core/utils/app_utils.dart';
+import 'package:go_bus_driver_app/core/widgets/time_bubble.dart';
+import 'package:go_bus_driver_app/data/bloc/trip/trip_bloc.dart';
+import 'package:go_bus_driver_app/data/bloc/trip/trip_event.dart';
+import 'package:go_bus_driver_app/data/bloc/trip/trip_state.dart';
+import 'package:go_bus_driver_app/data/models/punchin/trip_punchin_request_model.dart';
 import 'package:go_bus_driver_app/data/models/trip/driver_trip_response_model.dart';
+import 'package:go_bus_driver_app/screens/home/tabs/upcoming_tab.dart'
+    hide timelineRow;
 import 'package:go_router/go_router.dart';
 import 'package:go_bus_driver_app/routes/route_paths.dart';
 import 'package:intl/intl.dart';
 
 class OngoingTab extends StatefulWidget {
-  final DriverTripsResponse trips;
-
-  const OngoingTab({super.key, required this.trips});
+  const OngoingTab({super.key});
 
   @override
   State<OngoingTab> createState() => _OngoingTabState();
 }
 
 class _OngoingTabState extends State<OngoingTab> {
-  late List<DriverTrip> trips;
-
-  @override
-  void initState() {
-    super.initState();
-    trips = widget.trips.data.goingOn;
-  }
-
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: trips.length,
-      itemBuilder: (context, i) => _ongoingCard(context, trips[i]),
+    return BlocListener<TripBloc, TripState>(
+      listener: (context, state) {
+        if (state is TripError) {
+          AppToast.show(context, message: state.message, type: ToastType.error);
+          context.read<TripBloc>().add(FetchDriverTrips());
+        }
+      },
+      child: BlocBuilder<TripBloc, TripState>(
+        builder: (context, state) {
+          if (state is TripLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (state is TripLoaded) {
+            final trips = state.response.data.goingOn;
+
+            if (trips.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      "No completed trips",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                      ),
+                      icon: const Icon(Icons.refresh,color: AppColors.white,),
+                      label: const Text("Refresh",style: TextStyle(color: AppColors.white),),
+                      onPressed: () {
+                        context.read<TripBloc>().add(
+                          FetchDriverTrips(), // 🔥 use your actual fetch event
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return RefreshIndicator(
+              color: AppColors.primary,
+              onRefresh: () async {
+                context.read<TripBloc>().add(FetchDriverTrips());
+              },
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: trips.length,
+                itemBuilder: (context, index) {
+                  return _ongoingCard(context, trips[index]);
+                },
+              ),
+            );
+          }
+
+          return const SizedBox();
+        },
+      ),
     );
   }
 
-  // ------------------------------------------------------------------------
-  // ONGOING CARD — EXACT LIKE SCREENSHOT
-  // ------------------------------------------------------------------------
+  // ------------------------------------------------------------------
+  // Ongoing Card
+  // ------------------------------------------------------------------
 
-Widget _ongoingCard(BuildContext context, DriverTrip trip) {
-  String fromCity = "Mumbai";
-  String toCity = "Nashik";
+  Widget _ongoingCard(BuildContext context, DriverTrip trip) {
+    final bool isPunchedOut = trip.punchOut != null;
 
-  String formatTime(String? time) {
-    if (time == null || time.isEmpty) return "Pending";
-    try {
-      final parsed = DateFormat("HH:mm").parse(time);
-      return DateFormat("h:mm a").format(parsed);
-    } catch (_) {
-      return time;
-    }
-  }
-
-  // Local state for Punch Out
-  String punchOutTime = trip.punchOut ?? "";
-
-  return Container(
-    margin: const EdgeInsets.symmetric(vertical: 10),
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: const Color(0xfff7f7f7), // grey background
-      borderRadius: BorderRadius.circular(16),
-    ),
-    child: Column(
-      children: [
-        // Header: Mumbai — bus — Nashik
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(fromCity,
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-            const SizedBox(width: 6),
-            Expanded(child: Divider(color: Colors.grey, thickness: 1)),
-            const SizedBox(width: 6),
-            Icon(Icons.directions_bus, color: Colors.grey[700], size: 22),
-            const SizedBox(width: 6),
-            Expanded(child: Divider(color: Colors.grey, thickness: 1)),
-            const SizedBox(width: 6),
-            Text(toCity,
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-          ],
-        ),
-        const SizedBox(height: 12),
-
-        // Info box
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            offset: const Offset(0, 3),
+            blurRadius: 12,
+            color: Colors.black.withOpacity(0.12),
           ),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      "SCHEDULE DATE",
-                      style: TextStyle(fontSize: 11, color: Colors.grey),
-                    ),
+        ],
+      ),
+      child: Column(
+        children: [
+          /// Cities
+          SizedBox(
+            width: double.infinity,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    trip.route?.startFrom ?? "--",
+                    textAlign: TextAlign.center,
+                    maxLines: 3,
+                    overflow: TextOverflow.visible,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                   ),
-                  Text(trip.tripStartDate ?? "6 October 2025",
-                      style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.orange,
-                          fontWeight: FontWeight.w600)),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Divider(color: Colors.black12),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      "BUS NAME & NO.",
-                      style: TextStyle(fontSize: 11, color: Colors.grey),
-                    ),
-                  ),
-                  Text(
-                      "Vighnhar ${trip.busId ?? "MH47J1234"}",
-                      style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFFBF360C),
-                          fontWeight: FontWeight.w700)),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
+                ),
 
-        // Punch in / Punch out row
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              children: [
-                const Text("Punch in", style: TextStyle(fontSize: 11, color: Colors.grey)),
-                const SizedBox(height: 6),
-                _bubbleSmall(formatTime(trip.tripStartTime)),
-              ],
-            ),
-            Column(
-              children: [
-                const Text("Punch out", style: TextStyle(fontSize: 11, color: Colors.grey)),
-                const SizedBox(height: 6),
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      punchOutTime =
-                          DateFormat("h:mm a").format(DateTime.now());
-                    });
-                  },
-                  child: _bubbleSmall(punchOutTime.isEmpty ? "Pending" : punchOutTime),
+                Expanded(
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Divider(color: Colors.grey, thickness: 1),
+                      ),
+                      const SizedBox(width: 6),
+                      SvgPicture.asset(
+                        AppStrings.fromToBus,
+                        width: 24,
+                        height: 24,
+                        color: AppColors.grey, // optional
+                      ),
+                      const SizedBox(width: 6),
+                      const Expanded(
+                        child: Divider(color: Colors.grey, thickness: 1),
+                      ),
+                    ],
+                  ),
+                ),
+
+                Expanded(
+                  child: Text(
+                    trip.route?.endAt ?? "--",
+                    textAlign: TextAlign.center,
+                    maxLines: 3,
+                    overflow: TextOverflow.visible,
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                  ),
                 ),
               ],
             ),
-          ],
-        ),
-        const SizedBox(height: 16),
+          ),
 
-        // Dotted line with circular dots
-        Row(
-          children: [
-            Container(
-              width: 12,
-              height: 12,
-              decoration: const BoxDecoration(
-                color: Colors.orange,
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  double dashWidth = 6;
-                  double dashSpacing = 4;
-                  int count =
-                      (constraints.maxWidth / (dashWidth + dashSpacing)).floor();
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: List.generate(count, (_) {
-                      return Container(
-                        width: dashWidth,
-                        height: 2,
-                        color: Colors.orange,
-                      );
-                    }),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 4),
-            Container(
-              width: 12,
-              height: 12,
-              decoration: const BoxDecoration(
-                color: Colors.orange,
-                shape: BoxShape.circle,
-              ),
-            ),
-          ],
-        ),
+          const SizedBox(height: 16),
 
-        const SizedBox(height: 12),
+          /// Info Box
+          _infoBox(trip),
 
-        // Buttons row
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text("Route Details", style: TextStyle(color: Colors.blue)),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  punchOutTime =
-                      DateFormat("h:mm a").format(DateTime.now());
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          const SizedBox(height: 22),
+
+          /// Punch In / Punch Out
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              bubbleWithLabel(
+                "Punch In",
+                formatTime(trip.punchIn ?? trip.tripStartTime),
               ),
-              child: const Text("Punch Out"),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
+              bubbleWithLabel(
+                "Punch Out",
+                trip.punchOut == null ? "Pending" : formatTime(trip.punchOut!),
+              ),
+            ],
+          ),
 
-Widget _bubbleSmall(String time) {
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-    decoration: BoxDecoration(
-      color: const Color(0xFFD9E8FF),
-      borderRadius: BorderRadius.circular(10),
-    ),
-    child: Text(
-      time,
-      style: const TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w700,
-        color: Colors.black,
+          const SizedBox(height: 14),
+
+          /// Timeline
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 50),
+            child: timelineRow(
+              "${calculateTotalHours(trip.tripStartTime, trip.tripEndTime)} h",
+            ),
+          ),
+
+          const SizedBox(height: 22),
+
+          /// Footer
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              GestureDetector(
+                onTap: () => context.push(RoutePaths.route, extra: trip.id),
+                child: const Text(
+                  "Route Details",
+                  style: TextStyle(
+                    color: Colors.blue,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+
+              GestureDetector(
+                onTap: isPunchedOut
+                    ? null
+                    : () {
+                        context.read<TripBloc>().add(
+                          SubmitTripStatus(
+                            TripStatusRequest(
+                              tripId: trip.id,
+                              status: "punch_out",
+                            ),
+                          ),
+                        );
+                      },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 32,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isPunchedOut ? Colors.grey.shade300 : Colors.orange,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    isPunchedOut ? "Punched Out" : "Punch Out",
+                    style: TextStyle(
+                      color: isPunchedOut ? Colors.grey.shade700 : Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
-    ),
-  );
-}
-
+    );
   }
 
-extension on DriverTrip {
-  DriverTrip copyWith({String? punchOut}) {
-    return DriverTrip(
-      id: id,
-      routeId: routeId,
-      tripStartDate: tripStartDate,
-      tripStartTime: tripStartTime,
-      tripEndDate: tripEndDate,
-      tripEndTime: tripEndTime,
-      busId: busId,
-      policyId: policyId,
-      driverId: driverId,
-      helperId: helperId,
-      conductorId: conductorId,
-      extraSeats: extraSeats,
-      status: status,
-      deletedStatus: deletedStatus,
-      tripStatus: tripStatus,
-      statusRemark: statusRemark,
-      createdBy: createdBy,
-      updatedBy: updatedBy,
-      createdAt: createdAt,
-      updatedAt: updatedAt,
-      punchIn: punchIn,
-      punchOut: punchOut,
+  Widget _infoBox(DriverTrip trip) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: Text("SCHEDULE DATE", style: TextStyle(fontSize: 11)),
+              ),
+              Text(
+                trip.tripStartDate ?? "--",
+                style: const TextStyle(color: Color(0xFFFF6A00)),
+              ),
+            ],
+          ),
+          const Divider(),
+          Row(
+            children: [
+              const Expanded(
+                child: Text("BUS NAME & NO.", style: TextStyle(fontSize: 11)),
+              ),
+              Text(
+                "${trip.bus?.busName} ${trip.bus?.registrationNumber}",
+                style: const TextStyle(color: Color(0xFFBF360C)),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

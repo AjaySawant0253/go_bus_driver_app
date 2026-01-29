@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_bus_driver_app/core/di/injection_container.dart';
 import 'package:go_bus_driver_app/core/widgets/app_header.dart';
+import 'package:go_bus_driver_app/data/bloc/logout/logout_bloc.dart';
 import 'package:go_bus_driver_app/data/bloc/trip/trip_bloc.dart';
 import 'package:go_bus_driver_app/data/bloc/trip/trip_state.dart';
 import 'package:go_bus_driver_app/data/models/trip/driver_trip_response_model.dart';
@@ -48,7 +50,10 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_selectedIndex == 0) {
       return _buildHomeScreen();
     } else {
-      return const ProfileScreen();
+       return BlocProvider(
+      create: (_) => sl<LogoutBloc>(),
+      child: const ProfileScreen(),
+    );
     }
   }
 
@@ -140,13 +145,13 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _getCurrentTab(DriverTripsResponse tripsData) {
     switch (_currentSectionIndex) {
       case 0:
-        return UpcomingTab(trips: tripsData);
+        return UpcomingTab();
       case 1:
-        return OngoingTab(trips: tripsData);
+        return OngoingTab();
       case 2:
-        return CompletedTab(trips: tripsData);
+        return CompletedTab();
       default:
-        return UpcomingTab(trips: tripsData);
+        return UpcomingTab();
     }
   }
 }

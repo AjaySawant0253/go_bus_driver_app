@@ -1,7 +1,14 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_bus_driver_app/core/di/injection_container.dart';
+import 'package:go_bus_driver_app/core/secure/secure_storage_service.dart';
 import 'package:go_bus_driver_app/core/widgets/app_header.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:go_bus_driver_app/data/bloc/logout/logout_bloc.dart';
+import 'package:go_bus_driver_app/data/bloc/logout/logout_event.dart';
+import 'package:go_bus_driver_app/data/bloc/logout/logout_state.dart';
+import 'package:go_bus_driver_app/routes/route_paths.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -11,94 +18,114 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  File? _profileImage;
-  final ImagePicker _picker = ImagePicker();
+  String fullName = '';
+  String employeeImage = '';
 
-  Future<void> pickImage() async {
-    final XFile? pickedFile = await _picker.pickImage(
-      source: ImageSource.gallery,
-    );
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
 
-    if (pickedFile != null) {
-      setState(() {
-        _profileImage = File(pickedFile.path);
-      });
-    }
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      fullName = prefs.getString('name') ?? '';
+      employeeImage = prefs.getString('empImg') ?? '';
+    });
+  }
+
+  void clearData() {
+    final secureStorage = sl<SecureStorageService>();
+    secureStorage.clear();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            GoBusHeader(showBackButton: false),
+    return BlocListener<LogoutBloc, LogoutState>(
+      listener: (context, state) {
+        if (state is LogoutLoading) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => const Center(child: CircularProgressIndicator()),
+          );
+        }
 
-            const SizedBox(height: 5),
+        if (state is LogoutSuccess) {
+          Navigator.pop(context);
+          clearData();
+          context.goNamed(RoutePaths.login);
+        }
 
-            const SizedBox(height: 40),
+        if (state is LogoutFailure) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context)
+              .showSnackBar(SnackBar(content: Text(state.message)));
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              GoBusHeader(showBackButton: false),
+              const SizedBox(height: 40),
 
-            // Profile Image + Upload Icon
-            Stack(
-              children: [
-                CircleAvatar(
-                  radius: 60,
-                  backgroundColor: Colors.grey.shade300,
-                  backgroundImage: _profileImage != null
-                      ? FileImage(_profileImage!)
-                      : null,
-                  child: _profileImage == null
-                      ? const Icon(Icons.person, size: 70, color: Colors.white)
-                      : null,
-                ),
-
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: InkWell(
-                    onTap: pickImage,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: Colors.blue,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.camera_alt,
+              /// Profile Image (NETWORK ONLY)
+              CircleAvatar(
+                radius: 60,
+                backgroundColor: Colors.grey.shade300,
+                backgroundImage: employeeImage.isNotEmpty
+                    ? NetworkImage(
+                        "https://test.newtrimurtitravels.com/$employeeImage",
+                      )
+                    : null,
+                child: employeeImage.isEmpty
+                    ? const Icon(
+                        Icons.person,
+                        size: 70,
                         color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ),
+                      )
+                    : null,
+              ),
+
+              const SizedBox(height: 20),
+
+              Text(
+                fullName.isNotEmpty ? fullName : "User",
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
                 ),
-              ],
-            ),
+              ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 40),
 
-            const Text(
-              "Ajay Chorge",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
-            ),
+              buildMenuItem(
+                icon: Icons.person_outline,
+                title: "Personal Information",
+                onTap: () {
+                  context.push(RoutePaths.personalInfo);
+                },
+              ),
 
-            const SizedBox(height: 40),
+              // buildMenuItem(
+              //   icon: Icons.help_outline,
+              //   title: "Help",
+              //   onTap: () {},
+              // ),
 
-            buildMenuItem(
-              icon: Icons.person_outline,
-              title: "Personal Information",
-              onTap: () {},
-            ),
-
-            buildMenuItem(
-              icon: Icons.help_outline,
-              title: "Help",
-              onTap: () {},
-            ),
-
-            buildMenuItem(icon: Icons.logout, title: "Log Out", onTap: () {}),
-          ],
+              buildMenuItem(
+                icon: Icons.logout,
+                title: "Log Out",
+                onTap: () {
+                  context.read<LogoutBloc>().add(LogoutRequested());
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -115,9 +142,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         onTap: onTap,
         child: Row(
           children: [
-            Icon(icon, color: Colors.black87, size: 26),
+            Icon(icon, size: 26),
             const SizedBox(width: 20),
-            Expanded(child: Text(title, style: const TextStyle(fontSize: 18))),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(fontSize: 18),
+              ),
+            ),
             const Icon(Icons.arrow_forward_ios, size: 16),
           ],
         ),

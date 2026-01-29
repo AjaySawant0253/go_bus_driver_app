@@ -1,12 +1,12 @@
-import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_bus_driver_app/core/di/injection_container.dart';
-import 'package:go_bus_driver_app/core/network/api_client.dart';
 import 'package:go_bus_driver_app/data/bloc/login/login_bloc.dart';
+import 'package:go_bus_driver_app/data/bloc/passenger/passenger_bloc.dart';
+import 'package:go_bus_driver_app/data/bloc/route-details/trip_routes_bloc.dart';
 import 'package:go_bus_driver_app/data/bloc/trip/trip_bloc.dart';
 import 'package:go_bus_driver_app/data/bloc/trip/trip_event.dart';
-import 'package:go_bus_driver_app/data/repositories/login/login_repo_impl.dart';
 import 'package:go_bus_driver_app/routes/route_paths.dart';
+import 'package:go_bus_driver_app/screens/Profile/personal_info.dart';
 import 'package:go_bus_driver_app/screens/home/home_screen.dart';
 import 'package:go_bus_driver_app/screens/login/login.dart';
 import 'package:go_bus_driver_app/screens/passengers/passenger_detail_screen.dart';
@@ -19,11 +19,11 @@ import 'package:go_bus_driver_app/screens/splash_screen.dart';
 import 'package:go_router/go_router.dart';
 
 final GoRouter appRouter = GoRouter(
-  initialLocation: RoutePaths.home,
+  initialLocation: RoutePaths.splashScreen,
   routes: [
     GoRoute(
       path: RoutePaths.splashScreen,
-      builder: (context, state) => HomeScreen(),
+      builder: (context, state) => SplashScreen(),
     ),
     GoRoute(
       path: RoutePaths.login,
@@ -34,6 +34,11 @@ final GoRouter appRouter = GoRouter(
           child: LoginScreen(),
         );
       },
+    ),
+    GoRoute(
+      name: RoutePaths.personalInfo,
+      path: RoutePaths.personalInfo,
+      builder: (context, state) => const PersonalInfoScreen(),
     ),
 
     GoRoute(
@@ -46,6 +51,7 @@ final GoRouter appRouter = GoRouter(
         );
       },
     ),
+    
     GoRoute(
       path: RoutePaths.schedule,
       name: RoutePaths.schedule,
@@ -53,8 +59,19 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: RoutePaths.route,
-      builder: (_, __) => const RouteDetailsScreen(),
+      builder: (context, state) {
+        final tripId = state.extra as String;
+
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider<TripRoutesBloc>(create: (_) => sl<TripRoutesBloc>()),
+            BlocProvider<PassengerBloc>(create: (_) => sl<PassengerBloc>()),
+          ],
+          child: RouteDetailsScreen(tripId: tripId),
+        );
+      },
     ),
+
     GoRoute(path: RoutePaths.punch, builder: (_, __) => const PunchScreen()),
     GoRoute(
       path: RoutePaths.pickups,

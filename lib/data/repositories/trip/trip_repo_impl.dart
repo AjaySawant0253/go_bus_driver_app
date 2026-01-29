@@ -1,5 +1,7 @@
 import 'package:go_bus_driver_app/core/constants/api_endpoints.dart';
 import 'package:go_bus_driver_app/core/network/api_client.dart';
+import 'package:go_bus_driver_app/data/models/punchin/trip_punchin_reponse_model.dart';
+import 'package:go_bus_driver_app/data/models/punchin/trip_punchin_request_model.dart';
 import 'package:go_bus_driver_app/data/models/trip/driver_trip_response_model.dart';
 import 'package:go_bus_driver_app/data/repositories/trip/trip_repo.dart';
 
@@ -13,5 +15,21 @@ class TripRepositoryImpl implements TripRepository {
     final response = await apiClient.get(ApiEndpoints.getTrips,isAuthRequired: true);
 
     return DriverTripsResponse.fromJson(response.data);
+  }
+
+  @override
+  Future<TripStatusResponse> punchTripStatus(
+      TripStatusRequest request) async {
+    final response = await apiClient.post(
+      ApiEndpoints.punchInOut,
+      isAuthRequired: true,
+      data: request.toJson(),
+    );
+
+    if (response.statusCode == 200 && response.data != null) {
+      return TripStatusResponse.fromJson(response.data);
+    } else {
+      throw Exception("Punch in failed");
+    }
   }
 }

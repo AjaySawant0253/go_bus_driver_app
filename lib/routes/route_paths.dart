@@ -9,4 +9,5 @@ class RoutePaths {
   static const pickups = '/pickups';
   static const passengers = '/passengers';
   static const passDetails = '/passenger-details';
+  static const personalInfo = '/personal-info';
 }

@@ -21,6 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final SecureStorageService _storageService = SecureStorageService();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
   bool showPassword = false;
 
@@ -56,52 +57,45 @@ class _LoginScreenState extends State<LoginScreen> {
               }
             },
             builder: (context, state) {
-              return SingleChildScrollView(
-                child: Padding(
-                  padding:
-                      EdgeInsets.symmetric(horizontal: size.width * 0.12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 20),
+              return Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: size.width * 0.12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 20),
 
-                      /// ---------------- LOGO ----------------
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.asset(
-                            AppStrings.loginLogo,
-                            width: 150,
-                            height: 120,
-                          ),
-                          const SizedBox(width: 12),
-                          ],
-                      ),
-
-                      const SizedBox(height: 25),
-
-                      /// ---------------- IMAGE ----------------
-                      Center(
-                        child: Image.asset(
-                          AppStrings.signinImg,
-                          width: size.width * 0.75,
-                        ),
-                      ),
-
-                      const SizedBox(height: 45),
-
-                      /// ---------------- EMAIL ----------------
-                      Container(
-                        decoration: const BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(
-                              color: AppColors.primary,
-                              width: 1.5,
+                        /// ---------------- LOGO ----------------
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Image.asset(
+                              AppStrings.loginLogo,
+                              width: 150,
+                              height: 120,
                             ),
+                            const SizedBox(width: 12),
+                          ],
+                        ),
+
+                        const SizedBox(height: 25),
+
+                        /// ---------------- IMAGE ----------------
+                        Center(
+                          child: Image.asset(
+                            AppStrings.signinImg,
+                            width: size.width * 0.75,
                           ),
                         ),
-                        child: CustomTextFormField(
+
+                        const SizedBox(height: 45),
+
+                        /// ---------------- EMAIL ----------------
+                        CustomTextFormField(
                           controller: emailController,
                           labelText: "Email / Contact no",
                           prefixIcon: const Icon(
@@ -109,22 +103,33 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: AppColors.primary,
                           ),
                           hasBorder: false,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return "Email or contact number is required";
+                            }
+                        
+                            final input = value.trim();
+                        
+                            // Email regex
+                            final emailRegex =
+                                RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                        
+                            // Mobile regex (10 digits)
+                            final phoneRegex = RegExp(r'^[0-9]{10}$');
+                        
+                            if (!emailRegex.hasMatch(input) &&
+                                !phoneRegex.hasMatch(input)) {
+                              return "Enter a valid email or 10-digit contact number";
+                            }
+                        
+                            return null;
+                          },
                         ),
-                      ),
 
-                      const SizedBox(height: 28),
+                        const SizedBox(height: 28),
 
-                      /// ---------------- PASSWORD ----------------
-                      Container(
-                        decoration: const BoxDecoration(
-                          border: Border(
-                            bottom: BorderSide(
-                              color: AppColors.primary,
-                              width: 1.5,
-                            ),
-                          ),
-                        ),
-                        child: CustomTextFormField(
+                        /// ---------------- PASSWORD ----------------
+                        CustomTextFormField(
                           controller: passwordController,
                           labelText: "Password",
                           obscureText: !showPassword,
@@ -144,57 +149,66 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           hasBorder: false,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return "Password is required";
+                            }
+                            return null;
+                          },
                         ),
-                      ),
 
-                      const SizedBox(height: 40),
+                        const SizedBox(height: 40),
 
-                      /// ---------------- SIGN IN BUTTON ----------------
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed: state is LoginLoading
-                              ? null
-                              : () async {
-                                final token = await _storageService
-                                    .getFcmToken();
-                                  context.read<LoginBloc>().add(
-                                        LoginButtonPressed(
-                                          userDetails:
-                                              emailController.text.trim(),
-                                          password:
-                                              passwordController.text.trim(),
-                                          fcmToken: token ?? "",
-                                          signatureId: "",
-                                          lat: "",
-                                          lng: "",
-                                        ),
-                                      );
-                                },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                        /// ---------------- SIGN IN BUTTON ----------------
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: state is LoginLoading
+                                ? null
+                                : () async {
+                                    if (!_formKey.currentState!.validate()) {
+                                      return;
+                                    }
+                                    final token =
+                                        await _storageService.getFcmToken();
+                                    context.read<LoginBloc>().add(
+                                          LoginButtonPressed(
+                                            userDetails:
+                                                emailController.text.trim(),
+                                            password:
+                                                passwordController.text.trim(),
+                                            fcmToken: token ?? "",
+                                            signatureId: "",
+                                            lat: "",
+                                            lng: "",
+                                          ),
+                                        );
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
-                          ),
-                          child: state is LoginLoading
-                              ? const CircularProgressIndicator(
-                                  color: Colors.white,
-                                )
-                              : const Text(
-                                  "SIGN IN",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
+                            child: state is LoginLoading
+                                ? const CircularProgressIndicator(
                                     color: Colors.white,
+                                  )
+                                : const Text(
+                                    "SIGN IN",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
                                   ),
-                                ),
+                          ),
                         ),
-                      ),
 
-                      const SizedBox(height: 30),
-                    ],
+                        const SizedBox(height: 30),
+                      ],
+                    ),
                   ),
                 ),
               );

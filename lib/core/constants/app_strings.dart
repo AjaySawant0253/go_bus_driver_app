@@ -21,5 +21,8 @@ class AppStrings {
   static const fromTo = 'assets/icons/two-arrows.png';
   static const calendar = 'assets/icons/calendar.svg';
   static const fromToBus = 'assets/icons/fromtobus.svg';
+
+  //redirect routes
+  static const contactUS = 'https://newtrimurtitravels.com/contact-us';
   
 }

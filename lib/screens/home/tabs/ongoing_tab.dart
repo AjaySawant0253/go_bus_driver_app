@@ -49,24 +49,29 @@ class _OngoingTabState extends State<OngoingTab> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
-                      "No completed trips",
+                      "No ongoing trips",
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     const SizedBox(height: 12),
-
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                       ),
-                      icon: const Icon(Icons.refresh,color: AppColors.white,),
-                      label: const Text("Refresh",style: TextStyle(color: AppColors.white),),
+                      icon: const Icon(
+                        Icons.refresh,
+                        color: AppColors.white,
+                      ),
+                      label: const Text(
+                        "Refresh",
+                        style: TextStyle(color: AppColors.white),
+                      ),
                       onPressed: () {
                         context.read<TripBloc>().add(
-                          FetchDriverTrips(), // 🔥 use your actual fetch event
-                        );
+                              FetchDriverTrips(), // 🔥 use your actual fetch event
+                            );
                       },
                     ),
                   ],
@@ -129,10 +134,10 @@ class _OngoingTabState extends State<OngoingTab> {
                     textAlign: TextAlign.center,
                     maxLines: 3,
                     overflow: TextOverflow.visible,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                        fontSize: 14, fontWeight: FontWeight.w700),
                   ),
                 ),
-
                 Expanded(
                   child: Row(
                     children: [
@@ -153,7 +158,6 @@ class _OngoingTabState extends State<OngoingTab> {
                     ],
                   ),
                 ),
-
                 Expanded(
                   child: Text(
                     trip.route?.endAt ?? "--",
@@ -195,7 +199,7 @@ class _OngoingTabState extends State<OngoingTab> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 50),
             child: timelineRow(
-              "${calculateTotalHours(trip.tripStartTime, trip.tripEndTime)} h",
+              "${calculateTotalHours(trip.tripStartTime, trip.tripStartDate, trip.tripEndDate, trip.tripEndTime)} h",
             ),
           ),
 
@@ -206,7 +210,8 @@ class _OngoingTabState extends State<OngoingTab> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               GestureDetector(
-                onTap: () => context.push(RoutePaths.route, extra: trip.id),
+                onTap: () => context.push(RoutePaths.route,
+                    extra: {"tripId": trip.id, "tabName": "Ongoing"}),
                 child: const Text(
                   "Route Details",
                   style: TextStyle(
@@ -215,20 +220,10 @@ class _OngoingTabState extends State<OngoingTab> {
                   ),
                 ),
               ),
-
               GestureDetector(
                 onTap: isPunchedOut
                     ? null
-                    : () {
-                        context.read<TripBloc>().add(
-                          SubmitTripStatus(
-                            TripStatusRequest(
-                              tripId: trip.id,
-                              status: "punch_out",
-                            ),
-                          ),
-                        );
-                      },
+                    : () => _showPunchOutConfirmation(context, trip),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 32,
@@ -252,6 +247,57 @@ class _OngoingTabState extends State<OngoingTab> {
         ],
       ),
     );
+  }
+
+  Future<void> _showPunchOutConfirmation(
+    BuildContext context,
+    DriverTrip trip,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            "Confirm Punch Out",
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: const Text(
+            "Are you sure you want to punch out for this trip?",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+              ),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text(
+                "Punch Out",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      context.read<TripBloc>().add(
+            SubmitTripStatus(
+              TripStatusRequest(
+                tripId: trip.id,
+                status: "punch_out",
+              ),
+            ),
+          );
+    }
   }
 
   Widget _infoBox(DriverTrip trip) {

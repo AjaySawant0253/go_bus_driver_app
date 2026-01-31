@@ -41,7 +41,7 @@ class UpcomingTab extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
-                      "No completed trips",
+                      "No upcoming trips",
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -183,7 +183,7 @@ class UpcomingTab extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 50),
             child: timelineRow(
-              "${calculateTotalHours(trip.tripStartTime, trip.tripEndTime)} h",
+              "${calculateTotalHours(trip.tripStartTime, trip.tripStartDate, trip.tripEndDate, trip.tripEndTime)} h",
             ),
           ),
 
@@ -194,7 +194,10 @@ class UpcomingTab extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               GestureDetector(
-                onTap: () => context.push(RoutePaths.route, extra: trip.id),
+                onTap: () => context.push(RoutePaths.route, extra: {
+                  "tripId": trip.id,
+                  "tabName": "Upcoming"
+                }),
                 child: const Text(
                   "Route Details",
                   style: TextStyle(
@@ -321,28 +324,47 @@ class UpcomingTab extends StatelessWidget {
   }
 }
 
-int calculateTotalHours(String startTime, String endTime) {
-  DateTime _parse(String time) {
-    final parts = time.split(':');
+int calculateTotalHours(
+  String? startTime,
+  String? tripStartDate,
+  String? tripEndDate,
+  String? endTime,
+) {
+  debugPrint("START DATE: ${tripStartDate}");
+debugPrint("END DATE: ${tripEndDate}");
+  if (startTime == null ||
+      endTime == null ||
+      tripStartDate == null ||
+      tripEndDate == null ||
+      startTime.isEmpty ||
+      endTime.isEmpty ||
+      tripStartDate.isEmpty ||
+      tripEndDate.isEmpty) {
+    return 0;
+  }
+
+  DateTime parseDateTime(String date, String time) {
+    final d = date.split('-'); 
+    final t = time.split(':'); 
+
     return DateTime(
-      2025,
-      1,
-      1,
-      int.parse(parts[0]),
-      int.parse(parts[1]),
-      int.parse(parts[2]),
+      int.parse(d[0]),
+      int.parse(d[1]),
+      int.parse(d[2]),
+      int.parse(t[0]),
+      t.length > 1 ? int.parse(t[1]) : 0,
+      t.length > 2 ? int.parse(t[2]) : 0,
     );
   }
 
-  final start = _parse(startTime);
-  final end = _parse(endTime);
+  DateTime start = parseDateTime(tripStartDate, startTime);
+  DateTime end = parseDateTime(tripEndDate, endTime);
 
-  // if end is before start => add 1 day
-  final actualEnd = end.isBefore(start) ? end.add(Duration(days: 1)) : end;
+  if (end.isBefore(start)) {
+    end = end.add(const Duration(days: 1));
+  }
 
-  final duration = actualEnd.difference(start);
-
-  return duration.inHours;
+  return (end.difference(start).inMinutes / 60).ceil();
 }
 
 Widget timelineRow(String hours) {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../constants/app_strings.dart';
+import 'package:go_bus_driver_app/core/constants/app_strings.dart';
 
 class GoBusHeader extends StatelessWidget {
   final bool showBackButton;
@@ -25,30 +25,29 @@ class GoBusHeader extends StatelessWidget {
         top: paddingTop,
         bottom: paddingBottom,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          /// Back Button (Optional)
-          if (showBackButton)
-            IconButton(
-              icon: const Icon(
-                Icons.arrow_back,
-                size: 24,
-                color: Colors.black,
-              ),
-              onPressed: onBack ?? () => Navigator.pop(context),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
-
-          if (showBackButton) const SizedBox(width: 12),
-
-          /// Logo Image Only (No Box, No Text)
           Image.asset(
             AppStrings.startupLogo,
             height: 36,
             fit: BoxFit.contain,
           ),
+
+          if (showBackButton)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back,
+                  size: 24,
+                  color: Colors.black,
+                ),
+                onPressed: onBack ?? () => Navigator.pop(context),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ),
         ],
       ),
     );

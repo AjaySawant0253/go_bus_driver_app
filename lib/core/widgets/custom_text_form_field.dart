@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:go_bus_driver_app/core/constants/app_colors.dart';
 
 class CustomTextFormField extends StatelessWidget {
   final TextEditingController? controller;
-  final FocusNode? focusNode; // Added FocusNode
+  final FocusNode? focusNode;
   final String? labelText;
   final String? hintText;
-  final String? errorText;
   final bool obscureText;
   final TextInputType keyboardType;
   final TextInputAction textInputAction;
@@ -28,15 +28,14 @@ class CustomTextFormField extends StatelessWidget {
   final Color? fillColor;
   final bool filled;
   final BorderRadius borderRadius;
-  final bool autofocus; // Added autofocus
+  final bool autofocus;
 
   const CustomTextFormField({
     super.key,
     this.controller,
-    this.focusNode, // Added to constructor
+    this.focusNode,
     this.labelText,
     this.hintText,
-    this.errorText,
     this.obscureText = false,
     this.keyboardType = TextInputType.text,
     this.textInputAction = TextInputAction.done,
@@ -59,109 +58,86 @@ class CustomTextFormField extends StatelessWidget {
     this.fillColor,
     this.filled = false,
     this.borderRadius = BorderRadius.zero,
-    this.autofocus = false, // Added to constructor
+    this.autofocus = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Calculate optimal content padding based on whether there's a label
     final defaultContentPadding = labelText != null
         ? const EdgeInsets.symmetric(horizontal: 16, vertical: 12)
         : const EdgeInsets.symmetric(horizontal: 0, vertical: 16);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
       children: [
-        // Label outside the text field for better alignment control
         if (labelText != null) ...[
           Text(
             labelText!,
-            style: labelStyle ?? TextStyle(
-              color: Colors.grey.shade700,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
+            style: labelStyle ??
+                TextStyle(
+                  color: Colors.grey.shade700,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
           ),
           const SizedBox(height: 8),
         ],
-        
-        // Text Field with consistent internal alignment
         TextFormField(
           controller: controller,
-          focusNode: focusNode, // Added focusNode
+          focusNode: focusNode,
           obscureText: obscureText,
           keyboardType: keyboardType,
           textInputAction: textInputAction,
           onChanged: onChanged,
           onFieldSubmitted: onSubmitted,
           validator: validator,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           enabled: enabled,
           maxLines: maxLines,
           maxLength: maxLength,
-          autofocus: autofocus, // Added autofocus
-          style: textStyle ?? TextStyle(
-            fontSize: 16, 
-            color: Colors.black87,
-            height: 1.2,
-          ),
+          autofocus: autofocus,
+          style: textStyle ??
+              const TextStyle(
+                fontSize: 16,
+                color: Colors.black87,
+              ),
           decoration: InputDecoration(
             hintText: hintText,
-            errorText: errorText,
-            prefixIcon: prefixIcon != null 
-                ? Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: prefixIcon,
-                  )
-                : null,
-            suffixIcon: suffixIcon != null
-                ? Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: suffixIcon,
-                  )
-                : null,
+            prefixIcon: prefixIcon,
+            suffixIcon: suffixIcon,
             filled: filled,
             fillColor: fillColor,
             contentPadding: contentPadding ?? defaultContentPadding,
             isDense: true,
-            
-            // Border styling - now uses focusNode to determine focused state
-            border: hasBorder ? OutlineInputBorder(
-              borderRadius: borderRadius,
-              borderSide: BorderSide(color: borderColor, width: borderWidth),
-            ) : InputBorder.none,
-            
-            enabledBorder: hasBorder ? OutlineInputBorder(
-              borderRadius: borderRadius,
-              borderSide: BorderSide(color: borderColor, width: borderWidth),
-            ) : InputBorder.none,
-            
-            focusedBorder: hasBorder ? OutlineInputBorder(
-              borderRadius: borderRadius,
-              borderSide: BorderSide(color: focusedBorderColor, width: borderWidth),
-            ) : InputBorder.none,
-            
-            errorBorder: hasBorder ? OutlineInputBorder(
-              borderRadius: borderRadius,
-              borderSide: BorderSide(color: Colors.red, width: borderWidth),
-            ) : InputBorder.none,
-            
-            focusedErrorBorder: hasBorder ? OutlineInputBorder(
-              borderRadius: borderRadius,
-              borderSide: BorderSide(color: Colors.red, width: borderWidth),
-            ) : InputBorder.none,
-            
-            disabledBorder: hasBorder ? OutlineInputBorder(
-              borderRadius: borderRadius,
-              borderSide: BorderSide(color: Colors.grey.shade300, width: borderWidth),
-            ) : InputBorder.none,
-            
-            hintStyle: hintStyle ?? TextStyle(
-              color: Colors.grey.shade500,
-              fontSize: 16,
-              height: 1.2,
+            enabledBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(
+                color: AppColors.primary,
+                width: 1.5,
+              ),
             ),
-            alignLabelWithHint: true,
+            focusedBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(
+                color: AppColors.primary,
+                width: 1.5,
+              ),
+            ),
+            errorBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(
+                color: Colors.red,
+                width: 1.5,
+              ),
+            ),
+            focusedErrorBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(
+                color: Colors.red,
+                width: 1.5,
+              ),
+            ),
+            errorStyle: const TextStyle(
+              fontSize: 12,
+              color: Colors.red,
+            ),
+            errorMaxLines: 2,
           ),
         ),
       ],

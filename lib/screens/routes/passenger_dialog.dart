@@ -28,7 +28,7 @@ class _PassengerDialogState extends State<PassengerDialog> {
   final ScrollController _horizontalController = ScrollController();
   final ScrollController _verticalController = ScrollController();
 
-  static const double tableWidth = 780;
+  static const double tableWidth = 880;
 
   @override
   void initState() {
@@ -70,11 +70,11 @@ class _PassengerDialogState extends State<PassengerDialog> {
                       );
 
                       context.read<PassengerBloc>().add(
-                        FetchPassengersEvent(
-                          tripId: widget.tripId,
-                          pickupId: widget.pickupId,
-                        ),
-                      );
+                            FetchPassengersEvent(
+                              tripId: widget.tripId,
+                              pickupId: widget.pickupId,
+                            ),
+                          );
                     }
 
                     if (state is PassengerBoardingError) {
@@ -114,7 +114,6 @@ class _PassengerDialogState extends State<PassengerDialog> {
                               children: [
                                 _buildTableHeader(),
                                 const Divider(height: 1, thickness: 2),
-
                                 Expanded(
                                   child: Scrollbar(
                                     controller: _verticalController,
@@ -148,8 +147,6 @@ class _PassengerDialogState extends State<PassengerDialog> {
   }
 
   // ... rest of your code (header, table header, rows, buttons)
-
-
 
   // ================= HEADER =================
 
@@ -200,6 +197,8 @@ class _PassengerDialogState extends State<PassengerDialog> {
           _VerticalLine(),
           _HeaderCell("Gender", 80),
           _VerticalLine(),
+          _HeaderCell("Age", 80),
+          _VerticalLine(),
           _HeaderCell("Contact No", 140),
           _VerticalLine(),
           _HeaderCell("Seat No.", 80),
@@ -227,12 +226,14 @@ class _PassengerDialogState extends State<PassengerDialog> {
               const _VerticalLine(),
               _Cell(p.gender, 80),
               const _VerticalLine(),
+              _Cell(p.age, 80),
+              const _VerticalLine(),
               _Cell(p.contactNumber, 140),
               const _VerticalLine(),
               _Cell(p.seatNumber, 80),
               const _VerticalLine(),
               _Cell(p.healthIssue, 120),
-              _StatusButton(isBoarded, p.boardedId),
+              _StatusButton(isBoarded, p.boardedId, p.passengerName),
             ],
           ),
         ),
@@ -304,8 +305,9 @@ class _VerticalLine extends StatelessWidget {
 class _StatusButton extends StatelessWidget {
   final bool boarded;
   final String boardedId;
+  final String passengerName;
 
-  const _StatusButton(this.boarded, this.boardedId);
+  const _StatusButton(this.boarded, this.boardedId, this.passengerName);
 
   @override
   Widget build(BuildContext context) {
@@ -320,8 +322,29 @@ class _StatusButton extends StatelessWidget {
                   context: context,
                   builder: (_) => AlertDialog(
                     title: const Text("Confirm Boarding"),
-                    content: const Text(
-                      "Are you sure you want to mark as boarded?",
+                    content: RichText(
+                      text: TextSpan(
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 14,
+                        ),
+                        children: [
+                          const TextSpan(
+                            text: "Are you sure you want to mark ",
+                          ),
+                          TextSpan(
+                            text: "'$passengerName'",
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontStyle: FontStyle.normal,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const TextSpan(
+                            text: " as boarded?",
+                          ),
+                        ],
+                      ),
                     ),
                     actions: [
                       TextButton(
@@ -332,8 +355,8 @@ class _StatusButton extends StatelessWidget {
                         onPressed: () {
                           Navigator.pop(context);
                           context.read<PassengerBloc>().add(
-                            ConfirmBoardingEvent(boardedId: boardedId),
-                          );
+                                ConfirmBoardingEvent(boardedId: boardedId),
+                              );
                         },
                         child: const Text("Confirm"),
                       ),

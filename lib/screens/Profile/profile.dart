@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_bus_driver_app/core/constants/app_strings.dart';
 import 'package:go_bus_driver_app/core/di/injection_container.dart';
 import 'package:go_bus_driver_app/core/secure/secure_storage_service.dart';
+import 'package:go_bus_driver_app/core/utils/app_utils.dart';
 import 'package:go_bus_driver_app/core/widgets/app_header.dart';
 import 'package:go_bus_driver_app/data/bloc/logout/logout_bloc.dart';
 import 'package:go_bus_driver_app/data/bloc/logout/logout_event.dart';
@@ -9,6 +11,7 @@ import 'package:go_bus_driver_app/data/bloc/logout/logout_state.dart';
 import 'package:go_bus_driver_app/routes/route_paths.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -111,11 +114,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
               ),
 
-              // buildMenuItem(
-              //   icon: Icons.help_outline,
-              //   title: "Help",
-              //   onTap: () {},
-              // ),
+              buildMenuItem(
+                icon: Icons.help_outline,
+                title: "Help",
+                onTap: () {
+                  openUrl(AppStrings.contactUS);
+                },
+              ),
 
               buildMenuItem(
                 icon: Icons.logout,
@@ -157,3 +162,5 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
+
+

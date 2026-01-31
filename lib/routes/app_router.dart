@@ -60,14 +60,16 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: RoutePaths.route,
       builder: (context, state) {
-        final tripId = state.extra as String;
+        final data = state.extra as Map<String, dynamic>;
+        final tripId = data["tripId"] as String;
+        final tabName = data["tabName"] as String;
 
         return MultiBlocProvider(
           providers: [
             BlocProvider<TripRoutesBloc>(create: (_) => sl<TripRoutesBloc>()),
             BlocProvider<PassengerBloc>(create: (_) => sl<PassengerBloc>()),
           ],
-          child: RouteDetailsScreen(tripId: tripId),
+          child: RouteDetailsScreen(tripId: tripId, tabName: tabName),
         );
       },
     ),

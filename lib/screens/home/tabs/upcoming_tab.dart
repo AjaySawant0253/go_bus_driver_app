@@ -3,8 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_bus_driver_app/core/constants/app_colors.dart';
 import 'package:go_bus_driver_app/core/constants/app_strings.dart';
+import 'package:go_bus_driver_app/core/secure/secure_storage_service.dart';
 import 'package:go_bus_driver_app/core/utils/app_toast.dart';
 import 'package:go_bus_driver_app/core/utils/app_utils.dart';
+import 'package:go_bus_driver_app/core/web-socket/location_service.dart';
 import 'package:go_bus_driver_app/core/widgets/time_bubble.dart';
 import 'package:go_bus_driver_app/data/bloc/trip/trip_bloc.dart';
 import 'package:go_bus_driver_app/data/bloc/trip/trip_event.dart';
@@ -24,6 +26,11 @@ class UpcomingTab extends StatelessWidget {
         if (state is TripError) {
           AppToast.show(context, message: state.message, type: ToastType.error);
           context.read<TripBloc>().add(FetchDriverTrips());
+        }
+        if(state is TripStatusError){
+          AppToast.show(context, message: state.message, type: ToastType.error);
+          LocationTrackingService().stopTracking();
+           context.read<TripBloc>().add(FetchDriverTrips());
         }
       },
       child: BlocBuilder<TripBloc, TripState>(
@@ -194,10 +201,8 @@ class UpcomingTab extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               GestureDetector(
-                onTap: () => context.push(RoutePaths.route, extra: {
-                  "tripId": trip.id,
-                  "tabName": "Upcoming"
-                }),
+                onTap: () => context.push(RoutePaths.route,
+                    extra: {"tripId": trip.id, "tabName": "Upcoming"}),
                 child: const Text(
                   "Route Details",
                   style: TextStyle(
@@ -275,6 +280,18 @@ class UpcomingTab extends StatelessWidget {
     );
 
     if (confirmed == true) {
+      final ready = await LocationTrackingService.ensureLocationReady();
+
+      if (!ready) {
+        return;
+      }
+
+      final SecureStorageService _storageService = SecureStorageService();
+      String? token = await _storageService.getToken();
+      LocationTrackingService().startTracking(
+        token: token ?? "",
+        tripId: trip.id,
+      );
       context.read<TripBloc>().add(
             SubmitTripStatus(
               TripStatusRequest(
@@ -331,7 +348,7 @@ int calculateTotalHours(
   String? endTime,
 ) {
   debugPrint("START DATE: ${tripStartDate}");
-debugPrint("END DATE: ${tripEndDate}");
+  debugPrint("END DATE: ${tripEndDate}");
   if (startTime == null ||
       endTime == null ||
       tripStartDate == null ||
@@ -344,8 +361,8 @@ debugPrint("END DATE: ${tripEndDate}");
   }
 
   DateTime parseDateTime(String date, String time) {
-    final d = date.split('-'); 
-    final t = time.split(':'); 
+    final d = date.split('-');
+    final t = time.split(':');
 
     return DateTime(
       int.parse(d[0]),

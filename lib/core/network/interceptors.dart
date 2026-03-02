@@ -87,10 +87,18 @@ class AppInterceptors extends Interceptor {
         });
       }
     }
-    // if (err.response?.statusCode == 401 ||
-    //     err.type == DioExceptionType.unknown) {
-    //   await forceLogout();
-    // }
+    if (err.response?.statusCode == 503) {
+      final context = appNavigatorKey.currentContext;
+      if (context != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          context.go(RoutePaths.login);
+        });
+      }
+    }
+    if (err.response?.statusCode == 404 ||
+        err.type == DioExceptionType.unknown) {
+      await forceLogout();
+    }
     super.onError(err, handler);
   }
 

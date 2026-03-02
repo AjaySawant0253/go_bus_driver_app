@@ -11,4 +11,5 @@ class ApiEndpoints {
       '/api/v1/driver/trip-pickup-passenger';
   static String get confirmBoarding => '/api/v1/driver/passenger-boarded';
   static String get logout => "/api/v1/driver/logout";
+  static String get updateLocation =>"$baseUrl/api/driver/update-location";
 }

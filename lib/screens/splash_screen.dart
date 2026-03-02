@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_bus_driver_app/core/constants/app_colors.dart';
 import 'package:go_bus_driver_app/core/constants/app_strings.dart';
 import 'package:go_bus_driver_app/core/secure/secure_storage_service.dart';
+import 'package:go_bus_driver_app/core/web-socket/location_service.dart';
 import 'package:go_bus_driver_app/routes/route_paths.dart';
 import 'package:go_router/go_router.dart';
 
@@ -22,7 +23,8 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
-  // ✅ INIT animation FIRST (sync)
+    _initPermissions();
+    // ✅ INIT animation FIRST (sync)
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
@@ -39,8 +41,13 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _initialize();
-    
-  }Future<void> _initialize() async {
+  }
+
+  Future<void> _initPermissions() async {
+  await LocationTrackingService.requestInitialPermission();
+}
+
+  Future<void> _initialize() async {
     // 1️⃣ Load token
     _token = await _storage.getToken();
 
@@ -54,8 +61,7 @@ class _SplashScreenState extends State<SplashScreen>
     // 4️⃣ Navigate after animation
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed && mounted) {
-        final isLoggedIn =
-            _token != null && _token!.isNotEmpty;
+        final isLoggedIn = _token != null && _token!.isNotEmpty;
 
         context.go(
           isLoggedIn ? RoutePaths.home : RoutePaths.login,
@@ -63,9 +69,6 @@ class _SplashScreenState extends State<SplashScreen>
       }
     });
   }
-
-
-
 
   loadTokenAndNavigate() async {
     String? _token = await _storage.getToken();
@@ -88,8 +91,7 @@ class _SplashScreenState extends State<SplashScreen>
     // Navigate to next page after animation completes
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed && mounted) {
-        final isLoggedIn =
-            _token != null && _token!.isNotEmpty;
+        final isLoggedIn = _token != null && _token!.isNotEmpty;
 
         context.go(
           isLoggedIn ? RoutePaths.home : RoutePaths.login,
@@ -130,7 +132,8 @@ class _SplashScreenState extends State<SplashScreen>
                           24,
                         ), // Adds inner spacing around the image
                         decoration: BoxDecoration(
-                          color: AppColors.white70, // Background color (optional)
+                          color:
+                              AppColors.white70, // Background color (optional)
                           borderRadius: BorderRadius.circular(
                             16,
                           ), // Rounded corners
@@ -150,10 +153,13 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                         child: Image.asset(
                           AppStrings.appLogo,
-                        width: size.width * 0.2,
-                        fit: BoxFit.contain,
-                      ),),
-                      SizedBox(height: 10,),
+                          width: size.width * 0.2,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
                       Text(
                         AppStrings.goBus,
                         style: TextStyle(

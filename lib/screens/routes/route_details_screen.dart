@@ -24,7 +24,7 @@ class RouteDetailsScreen extends StatefulWidget {
 }
 
 class _RouteDetailsScreenState extends State<RouteDetailsScreen> {
-  static const double _timeWidth = 60;
+  static const double _timeWidth = 80;
   static const double _gapBetweenTimeAndLine = 12;
   static const double _lineContainerWidth = 18;
   static const double _lineThickness = 3;

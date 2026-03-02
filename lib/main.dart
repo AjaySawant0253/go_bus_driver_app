@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_bus_driver_app/core/di/injection_container.dart';
 import 'package:go_bus_driver_app/core/firebase/Firebase_messaging.dart';
 import 'package:go_bus_driver_app/core/firebase/notification_service.dart';
+import 'package:go_bus_driver_app/core/web-socket/location_service.dart';
 import 'package:go_bus_driver_app/routes/app_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -18,7 +19,7 @@ void main() async{
     DeviceOrientation.portraitDown,
   ]);
   await init();
-  await dotenv.load(fileName: 'assets/env/.env.prod');
+  await dotenv.load(fileName: 'assets/env/.env.dev');
   runApp(const GoBusDriverApp());
 }
 

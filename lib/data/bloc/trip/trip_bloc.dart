@@ -39,7 +39,7 @@ class TripBloc extends Bloc<TripEvent, TripState> {
       }
       add(FetchDriverTrips()); 
     } catch (e) {
-      emit(TripError(e.toString()));
+      emit(TripStatusError(e.toString()));
     }}
     
 }

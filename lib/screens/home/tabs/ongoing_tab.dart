@@ -5,6 +5,7 @@ import 'package:go_bus_driver_app/core/constants/app_colors.dart';
 import 'package:go_bus_driver_app/core/constants/app_strings.dart';
 import 'package:go_bus_driver_app/core/utils/app_toast.dart';
 import 'package:go_bus_driver_app/core/utils/app_utils.dart';
+import 'package:go_bus_driver_app/core/web-socket/location_service.dart';
 import 'package:go_bus_driver_app/core/widgets/time_bubble.dart';
 import 'package:go_bus_driver_app/data/bloc/trip/trip_bloc.dart';
 import 'package:go_bus_driver_app/data/bloc/trip/trip_event.dart';
@@ -289,6 +290,7 @@ class _OngoingTabState extends State<OngoingTab> {
     );
 
     if (confirmed == true) {
+      LocationTrackingService().stopTracking();
       context.read<TripBloc>().add(
             SubmitTripStatus(
               TripStatusRequest(

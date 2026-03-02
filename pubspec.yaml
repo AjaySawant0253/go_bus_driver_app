@@ -2,10 +2,10 @@ name: go_bus_driver_app
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
-  sdk: ">=3.3.0 <4.0.0"   # ✅ FIXED (3.9 does NOT exist)
+  sdk: ">=3.3.0 <4.0.0"  
 
 dependencies:
   flutter:
@@ -36,6 +36,10 @@ dependencies:
   photo_manager: ^3.8.3
   flutter_dotenv: ^5.2.1
   url_launcher: ^6.3.0
+  geolocator: ^11.0.0
+  web_socket_channel: ^2.4.0
+  flutter_background_service: ^5.0.5
+  flutter_background_service_android: ^6.2.2
   
 
   cupertino_icons: ^1.0.8
